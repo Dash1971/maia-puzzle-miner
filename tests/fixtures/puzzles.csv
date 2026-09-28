@@ -1,0 +1,3 @@
+PuzzleId,FEN,Moves,Rating,RatingDeviation,Popularity,NbPlays,Themes,GameUrl,OpeningTags,DailyDate
+sample01,7k/8/8/8/8/8/8/K7 b - - 0 1,h8g8 a1b1,1500,80,90,200,quietMove,https://lichess.org/example#1,,
+sample02,7k/8/8/8/8/8/8/K7 b - - 0 1,h8g8 a1a2,1200,75,85,100,quietMove,https://lichess.org/example#1,,
