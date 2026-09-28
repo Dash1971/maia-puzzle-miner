@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping
 
 import chess
 
@@ -15,7 +16,24 @@ def assess(
     max_correct_probability: float,
 ) -> Assessment:
     board = chess.Board(puzzle.presented_fen)
-    probabilities = dict(provider.probabilities(board, elo))
+    return assess_probabilities(
+        puzzle,
+        elo,
+        provider.model_id,
+        provider.probabilities(board, elo),
+        max_correct_probability,
+    )
+
+
+def assess_probabilities(
+    puzzle: Puzzle,
+    elo: int,
+    model_id: str,
+    probabilities: Mapping[str, float],
+    max_correct_probability: float,
+) -> Assessment:
+    board = chess.Board(puzzle.presented_fen)
+    probabilities = dict(probabilities)
     legal_moves = {move.uci() for move in board.legal_moves}
     if set(probabilities) != legal_moves:
         missing = sorted(legal_moves - set(probabilities))
@@ -36,7 +54,7 @@ def assess(
     return Assessment(
         puzzle=puzzle,
         target_elo=elo,
-        model=provider.model_id,
+        model=model_id,
         correct_probability=correct_probability,
         correct_rank=correct_rank,
         top_move=top_move,

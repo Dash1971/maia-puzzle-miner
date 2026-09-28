@@ -9,9 +9,8 @@ This repository is the data-generation side of
 
 ## Status
 
-Early scaffold. The streaming parser, puzzle reconstruction, SQLite schema, scoring,
-resumption, JSONL export, and Maia-3 policy adapter are in place. A representative
-end-to-end scan with a downloaded Maia checkpoint is the next milestone.
+The streaming parser, puzzle reconstruction, SQLite schema, scoring, resumption, JSONL
+export, deterministic sampling, and Maia-3 ONNX policy adapter are in place.
 
 ## Why this is distinct
 
@@ -43,16 +42,19 @@ python3.12 -m venv .venv
 .venv/bin/pip install -e '.[dev,maia3]'
 ```
 
-The Maia-3 extra is pinned to a reviewed upstream commit. The first real scan downloads
-the selected model checkpoint from Hugging Face unless it is already cached.
+Supply a Maia-3 ONNX model exported from the official checkpoint. Models are not
+redistributed here. The optional `maia3-pytorch` extra pins the reviewed upstream source
+for export and research work; ordinary mining uses ONNX Runtime.
 
 ## Scan
 
 ```bash
 maia-puzzle-miner scan ~/Downloads/lichess_db_puzzle.csv.zst \
   --database puzzles.sqlite \
-  --elo 1500 \
-  --model maia3-5m \
+  --elo 1200 --elo 1500 --elo 1800 \
+  --model-path /path/to/maia3-5m.onnx \
+  --sample-modulus 610 \
+  --min-plays 100 --min-popularity 80 \
   --max-correct-probability 0.05
 ```
 
@@ -60,13 +62,15 @@ Safe smoke test:
 
 ```bash
 maia-puzzle-miner scan tests/fixtures/puzzles.csv \
-  --database smoke.sqlite --elo 1500 --model maia3-5m --limit 2
+  --database smoke.sqlite --elo 1500 \
+  --model-path /path/to/maia3-5m.onnx --limit 2
 ```
 
 Export selected candidates:
 
 ```bash
-maia-puzzle-miner export --database puzzles.sqlite --output selected.jsonl
+maia-puzzle-miner export --database puzzles.sqlite --output selected.jsonl \
+  --min-selected-elos 3 --max-puzzles 100
 ```
 
 Re-running `scan` against the same database skips already assessed puzzle/Elo pairs.

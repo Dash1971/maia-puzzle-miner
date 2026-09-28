@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import bz2
 import csv
+import hashlib
 import io
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -32,7 +33,11 @@ def open_puzzle_text(path: Path) -> Iterator[TextIO]:
         yield text
 
 
-def iter_puzzles(path: Path) -> Iterator[Puzzle]:
+def iter_puzzles(path: Path, sample_modulus: int | None = None) -> Iterator[Puzzle]:
     with open_puzzle_text(path) as text:
         for row in csv.DictReader(text):
+            if sample_modulus is not None:
+                digest = hashlib.sha256(row["PuzzleId"].encode("ascii")).digest()
+                if int.from_bytes(digest[:8], "big") % sample_modulus != 0:
+                    continue
             yield puzzle_from_row(row)

@@ -16,6 +16,10 @@ dependencies = [
 
 [project.optional-dependencies]
 maia3 = [
+  "numpy>=1.26,<3",
+  "onnxruntime>=1.20,<2",
+]
+maia3-pytorch = [
   "maia3 @ git+https://github.com/CSSLab/maia3.git@1e13597c42d4858b7cfd7cfdae01e297263364b2",
 ]
 dev = [

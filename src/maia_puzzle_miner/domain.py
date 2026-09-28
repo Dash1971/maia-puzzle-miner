@@ -27,6 +27,7 @@ class Puzzle:
 
     def as_json_dict(self) -> dict[str, object]:
         value = asdict(self)
+        value["correct_move"] = self.correct_move
         value["solution_moves"] = list(self.solution_moves)
         value["themes"] = list(self.themes)
         value["opening_tags"] = list(self.opening_tags)

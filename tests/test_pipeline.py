@@ -7,6 +7,7 @@ import chess
 
 from maia_puzzle_miner.domain import puzzle_from_row
 from maia_puzzle_miner.pipeline import scan
+from maia_puzzle_miner.policy.maia3 import historical_tokens, mirror_move, move_index
 from maia_puzzle_miner.store import AssessmentStore
 
 FIXTURE = Path(__file__).parent / "fixtures" / "puzzles.csv"
@@ -21,6 +22,25 @@ class FakePolicy:
         if "a1b1" in weights:
             weights["a1b1"] = 0.01
         return weights
+
+
+def test_maia3_move_vocabulary_and_black_mirroring() -> None:
+    assert move_index("e2e4", False) == 796
+    assert move_index("e7e5", True) == 796
+    assert move_index("a7a8q", False) == 4096
+    assert move_index("h7h8n", False) == 4351
+    assert mirror_move("e7e8q") == "e2e1q"
+
+
+def test_maia3_current_position_encoding() -> None:
+    board = chess.Board()
+    board.push_uci("e2e4")
+    tokens = historical_tokens(board)
+    assert tokens.shape == (1, 64, 97)
+    for history in range(8):
+        assert tokens[0, chess.E2, history * 12 + 6] == 0
+        assert tokens[0, chess.E5, history * 12 + 6] == 1
+    assert not tokens[:, :, 96].any()
 
 
 def test_reconstructs_presented_position_and_solution() -> None:
@@ -61,3 +81,12 @@ def test_scan_is_resumable_and_exports_selected(tmp_path: Path) -> None:
     assert selected[0]["puzzle_id"] == "sample01"
     assert selected[0]["assessment"]["correct_rank"] > 1
     json.dumps(selected[0])
+
+    store = AssessmentStore(database)
+    try:
+        grouped = list(store.selected_grouped_json(min_selected_elos=1, limit=1))
+    finally:
+        store.close()
+    assert len(grouped) == 1
+    assert grouped[0]["puzzle_id"] == "sample01"
+    assert len(grouped[0]["assessments"]) == 1

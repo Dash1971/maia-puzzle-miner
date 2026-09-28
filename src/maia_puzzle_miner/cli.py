@@ -17,14 +17,20 @@ def build_parser() -> argparse.ArgumentParser:
     scan_parser.add_argument("source", type=Path)
     scan_parser.add_argument("--database", type=Path, required=True)
     scan_parser.add_argument("--elo", type=int, action="append", required=True)
-    scan_parser.add_argument("--model", default="maia3-5m")
-    scan_parser.add_argument("--device")
+    scan_parser.add_argument("--model-path", type=Path, required=True)
     scan_parser.add_argument("--max-correct-probability", type=float, default=0.05)
     scan_parser.add_argument("--limit", type=int)
+    scan_parser.add_argument("--sample-modulus", type=int)
+    scan_parser.add_argument("--min-plays", type=int, default=0)
+    scan_parser.add_argument("--min-popularity", type=int, default=-100)
+    scan_parser.add_argument("--min-rating", type=int, default=0)
+    scan_parser.add_argument("--max-rating", type=int, default=4000)
 
     export_parser = subparsers.add_parser("export", help="export selected rows as JSONL")
     export_parser.add_argument("--database", type=Path, required=True)
     export_parser.add_argument("--output", type=Path, required=True)
+    export_parser.add_argument("--min-selected-elos", type=int, default=1)
+    export_parser.add_argument("--max-puzzles", type=int)
     return parser
 
 
@@ -33,7 +39,9 @@ def main() -> None:
     if args.command == "scan":
         if not 0 <= args.max_correct_probability <= 1:
             raise SystemExit("--max-correct-probability must be between 0 and 1")
-        provider = Maia3PolicyProvider(model=args.model, device=args.device)
+        if args.sample_modulus is not None and args.sample_modulus < 1:
+            raise SystemExit("--sample-modulus must be positive")
+        provider = Maia3PolicyProvider(model_path=args.model_path)
         stats = scan(
             source=args.source,
             database=args.database,
@@ -41,6 +49,11 @@ def main() -> None:
             provider=provider,
             max_correct_probability=args.max_correct_probability,
             limit=args.limit,
+            sample_modulus=args.sample_modulus,
+            min_plays=args.min_plays,
+            min_popularity=args.min_popularity,
+            min_rating=args.min_rating,
+            max_rating=args.max_rating,
         )
         print(json.dumps(stats.__dict__, sort_keys=True))
         return
@@ -48,7 +61,10 @@ def main() -> None:
     store = AssessmentStore(args.database)
     try:
         with args.output.open("w", encoding="utf-8") as output:
-            for item in store.selected_json():
+            for item in store.selected_grouped_json(
+                min_selected_elos=args.min_selected_elos,
+                limit=args.max_puzzles,
+            ):
                 output.write(json.dumps(item, separators=(",", ":")) + "\n")
     finally:
         store.close()
