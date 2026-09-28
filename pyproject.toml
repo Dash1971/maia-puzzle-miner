@@ -24,6 +24,7 @@ maia3-pytorch = [
 ]
 dev = [
   "build>=1.2,<2",
+  "numpy>=1.26,<3",
   "pytest>=8,<9",
   "ruff>=0.14,<1",
 ]
