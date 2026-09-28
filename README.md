@@ -86,8 +86,10 @@ The source files, model checkpoints, and generated databases are intentionally i
 
 - Lichess database exports are published under CC0. Do not commit the source corpus or
   generated bulk databases here.
-- Maia-3 is an external AGPL-3.0 project. This project is also AGPL-3.0-or-later.
+- This project's original code is MIT-licensed.
+- Maia-3 is an optional external dependency licensed under AGPL-3.0. Installing,
+  distributing, or deploying the combined system remains subject to Maia-3's upstream
+  license terms; this repository's MIT license does not relicense Maia-3.
 - No Maia model weights are redistributed by this repository.
 
 See [docs/research.md](docs/research.md) for the prior-art search and design rationale.
-
